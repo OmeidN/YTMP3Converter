@@ -24,7 +24,7 @@ app.get('/download', async (req, res) => {
   const videoURL = req.query.url;
   
   // Send an initial response to the client indicating the process has started
-  res.write(`<p>Starting the conversion process...</p>`);
+  res.write('<p>Starting the conversion process...</p>');
 
   if (!videoURL || !ytdl.validateURL(videoURL)) {
     res.write('<p>Error: Invalid or no URL provided. Please check the URL and try again.</p>');
