@@ -1,77 +1,91 @@
 const express = require('express');
-const path = require('path');
 const ytdl = require('ytdl-core');
-const fs = require('fs');
 const ffmpeg = require('fluent-ffmpeg');
+const fs = require('fs');
+const path = require('path');
+const ffmpegStatic = require('ffmpeg-static');
 
 const app = express();
 const PORT = 3000;
 
-// Middleware to serve static files (HTML, CSS, etc.)
-app.use(express.static(path.join(__dirname, 'public')));
+// Set FFmpeg path
+ffmpeg.setFfmpegPath(ffmpegStatic);
 
-// Middleware to parse URL-encoded bodies
-app.use(express.urlencoded({ extended: true }));
+// Middleware to serve static files (CSS and HTML)
+app.use(express.static('public'));
+
+// Middleware to parse JSON
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// Endpoint for handling YouTube link conversion
+// Serve the HTML form
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// POST endpoint to handle YouTube link submission
 app.post('/convert', async (req, res) => {
-    const videoURL = req.body.url;
-    let attempts = 0;
-    const maxAttempts = 3;
+  const youtubeUrl = req.body.url;
+  
+  console.log("Received YouTube link:", youtubeUrl);
 
-    const downloadMP3 = async () => {
-        attempts++;
-        try {
-            // Validate if the link is a valid YouTube URL
-            const isValidURL = ytdl.validateURL(videoURL);
-            if (!isValidURL) {
-                return res.status(400).json({ error: 'Invalid YouTube URL' });
+  if (!ytdl.validateURL(youtubeUrl)) {
+    console.log("Invalid YouTube link format.");
+    return res.status(400).send('Invalid YouTube link.');
+  }
+
+  const videoId = ytdl.getURLVideoID(youtubeUrl);
+  const outputFilePath = path.join(__dirname, 'downloads', `video-${videoId}.mp3`);
+  let retries = 0;
+  const maxRetries = 3;
+
+  const downloadAndConvert = () => {
+    console.log(`Starting conversion for video ID: ${videoId}`);
+
+    try {
+      const stream = ytdl(youtubeUrl, { quality: 'highestaudio' });
+
+      ffmpeg(stream)
+        .audioBitrate(128)
+        .toFormat('mp3')
+        .on('error', (err) => {
+          console.error('Error during conversion:', err);
+          retries += 1;
+
+          if (retries <= maxRetries) {
+            console.log(`Retrying... Attempt ${retries}`);
+            downloadAndConvert();
+          } else {
+            console.log("Max retries reached. Conversion failed.");
+            res.status(500).send('Failed to download video after multiple attempts.');
+          }
+        })
+        .on('end', () => {
+          console.log("Conversion successful.");
+          res.download(outputFilePath, `video-${videoId}.mp3`, (err) => {
+            if (err) {
+              console.error("Error sending file:", err);
+              res.status(500).send('Error downloading the file.');
             }
+          });
+        })
+        .save(outputFilePath);
 
-            const videoInfo = await ytdl.getInfo(videoURL);
-            const videoTitle = videoInfo.videoDetails.title.replace(/[^\w\s]/gi, ''); // Remove special characters
-            const outputPath = path.join(__dirname, 'downloads', `${videoTitle}.mp3`);
+    } catch (error) {
+      console.error("Unexpected error:", error);
+      res.status(500).send('An unexpected error occurred.');
+    }
+  };
 
-            // Check if file already exists
-            if (fs.existsSync(outputPath)) {
-                return res.json({ message: 'MP3 already exists', file: `/downloads/${videoTitle}.mp3` });
-            }
+  downloadAndConvert();
+});
 
-            // Download and convert to MP3
-            const stream = ytdl(videoURL, { filter: 'audioonly' });
-
-            ffmpeg(stream)
-                .audioBitrate(128)
-                .save(outputPath)
-                .on('end', () => {
-                    console.log('Conversion successful:', outputPath);
-                    res.json({ message: 'Conversion successful', file: `/downloads/${videoTitle}.mp3` });
-                })
-                .on('error', (err) => {
-                    console.error('Error during conversion:', err.message);
-                    if (attempts < maxAttempts) {
-                        console.log(`Retrying... Attempt ${attempts}`);
-                        downloadMP3(); // Retry on error
-                    } else {
-                        res.status(500).json({ error: 'Failed after 3 attempts' });
-                    }
-                });
-        } catch (error) {
-            console.error('Error during conversion:', error.message);
-            if (attempts < maxAttempts) {
-                console.log(`Retrying... Attempt ${attempts}`);
-                downloadMP3(); // Retry on error
-            } else {
-                res.status(500).json({ error: 'Failed after 3 attempts' });
-            }
-        }
-    };
-
-    downloadMP3();
+// Error handling for unhandled exceptions
+process.on('uncaughtException', (err) => {
+  console.error('There was an uncaught error', err);
 });
 
 // Start the server
 app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
 });
