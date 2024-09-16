@@ -1,21 +1,52 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MP3 Converter</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube to MP3 Converter</title>
+    <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-  <div class="container">
-    <h1>Convert YouTube to MP3</h1>
-    <form id="converter-form">
-      <input type="text" id="youtube-url" placeholder="Enter YouTube link" required>
-      <button type="submit">Convert</button>
-    </form>
-    <footer>
-      <p>Powered by <a href="https://www.youtube.com/">YouTube</a></p>
-    </footer>
-  </div>
+    <div class="container">
+        <h1>YouTube to MP3 Converter</h1>
+        <form id="converterForm">
+            <label for="url">Enter YouTube Link:</label>
+            <input type="text" id="url" name="url" placeholder="Paste YouTube link here" required>
+            <button type="submit">Convert</button>
+        </form>
+
+        <div id="messages"></div> <!-- Div for showing messages from server -->
+    </div>
+
+    <script>
+        const form = document.getElementById('converterForm');
+        const messagesDiv = document.getElementById('messages');
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const url = document.getElementById('url').value;
+
+            // Clear previous messages
+            messagesDiv.innerHTML = '';
+
+            try {
+                const response = await fetch(`/download?url=${encodeURIComponent(url)}`);
+                
+                // Read the stream of responses sent by the server
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let done = false;
+
+                while (!done) {
+                    const { value, done: readerDone } = await reader.read();
+                    done = readerDone;
+                    const chunk = decoder.decode(value);
+                    messagesDiv.innerHTML += chunk; // Append messages to the div
+                }
+            } catch (error) {
+                messagesDiv.innerHTML = `<p>Error: ${error.message}</p>`;
+            }
+        });
+    </script>
 </body>
 </html>

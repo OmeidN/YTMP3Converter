@@ -1,72 +1,66 @@
-/* Basic reset */
-* {
+/* styles.css */
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f9f9f9;
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
-    font-family: Arial, sans-serif;
-  }
-  
-  /* Main body style */
-  body {
-    background-color: #f9f9f9;
-    color: #333;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-  }
-  
-  /* Container for the form */
-  .container {
-    background-color: white;
-    border-radius: 8px;
-    box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.1);
+}
+
+.container {
+    max-width: 500px;
+    margin: 50px auto;
     padding: 20px;
-    max-width: 400px;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
     text-align: center;
-  }
-  
-  /* Title */
-  h1 {
-    color: #FF0000; /* YouTube Red */
-    font-size: 24px;
+    color: #ff0000; /* YouTube red */
     margin-bottom: 20px;
-  }
-  
-  /* Input field */
-  input[type="text"] {
-    width: 100%;
-    padding: 12px;
-    margin-bottom: 20px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-  }
-  
-  /* Button */
-  button {
-    background-color: #FF0000; /* YouTube Red */
-    color: white;
-    border: none;
-    border-radius: 4px;
-    padding: 12px;
-    cursor: pointer;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+label {
+    font-size: 18px;
+    color: #333;
+}
+
+input[type="text"] {
+    padding: 10px;
     font-size: 16px;
+    border: 2px solid #ddd;
+    border-radius: 5px;
     width: 100%;
-  }
-  
-  button:hover {
-    background-color: #D30000;
-  }
-  
-  /* Footer */
-  footer {
-    margin-top: 10px;
-    font-size: 14px;
-    color: #555;
-  }
-  
-  a {
-    color: #FF0000;
-    text-decoration: none;
-  }
-  
+}
+
+button {
+    padding: 10px;
+    font-size: 18px;
+    background-color: #ff0000; /* YouTube red */
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #e60000;
+}
+
+#messages {
+    margin-top: 20px;
+    padding: 10px;
+    background-color: #fff3cd;
+    border-left: 5px solid #ffa000;
+    color: #856404;
+    font-size: 16px;
+    border-radius: 5px;
+}
